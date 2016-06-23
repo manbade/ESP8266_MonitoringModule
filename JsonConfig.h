@@ -39,7 +39,7 @@ public:
 
     char module_id[32] = "1";
     char module_name[32] = "MonitoringSystem";
-    char module_pwd[32] = "Apolon1106";
+    char module_pwd[32] = "somepass123";
     char sta_ssid[32] = "MobileWiFi-b30f";
     char sta_pwd[32] = "421ed916";
 
