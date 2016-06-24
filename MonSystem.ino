@@ -28,8 +28,10 @@ SensorData data1;
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature. 
-DallasTemperature sensors(&oneWire);
+DallasTemperature sensors(&oneWire); 
 SensorData data2;
+// arrays to hold device address
+DeviceAddress insideThermometer;
 
 SFE_BMP180 bmp180;
 #define ALTITUDE 20 //meters
@@ -141,6 +143,19 @@ void webSetup()
         payload.toCharArray(config.sta_pwd, sizeof(config.sta_pwd));
         config_changed = true;
     }
+    payload = WebServer.arg("narodmon_toogle");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.narodmon_toogle, sizeof(config.narodmon_toogle));
+        config_changed = true;
+    }
+    
+    payload = WebServer.arg("ts_toogle");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.ts_toogle, sizeof(config.ts_toogle));
+        config_changed = true;
+    }
     payload = WebServer.arg("thing_speak_api_key");
     if (payload.length() > 0)
     {
@@ -172,6 +187,12 @@ void webSetup()
         payload.toCharArray(config.static_subnet, sizeof(config.static_subnet));
         config_changed = true;
     }
+    payload = WebServer.arg("get_data_delay");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.get_data_delay, sizeof(config.get_data_delay));
+        config_changed = true;
+    }
 
     String data = 
         renderTitle(config.module_name, "Налаштування") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
@@ -189,6 +210,8 @@ void webSetup()
         renderParameterRow("Основний шлюз", "static_gateway", config.static_gateway) + 
         renderParameterRow("Маска мережі", "static_subnet", config.static_subnet) + 
         "<hr/>" +
+        renderParameterRow("Увімкнути експорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
+        renderParameterRow("Увімкнути експорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
         renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
         renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) +  
         "<hr/>" +
@@ -235,18 +258,12 @@ void webSensors()
        payload.toCharArray(config.sensor_analog_on, sizeof(config.sensor_analog_on));
        config_changed = true;
    }
-    payload = WebServer.arg("reboot_delay");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.reboot_delay, sizeof(config.reboot_delay));
-        config_changed = true;
-    }
-    payload = WebServer.arg("get_data_delay");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.get_data_delay, sizeof(config.get_data_delay));
-        config_changed = true;
-    }
+//    payload = WebServer.arg("reboot_delay");
+//    if (payload.length() > 0)
+//    {
+//        payload.toCharArray(config.reboot_delay, sizeof(config.reboot_delay));
+//        config_changed = true;
+//    }
 
     String data = 
         renderTitle(config.module_name, "Давачі даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
@@ -254,7 +271,7 @@ void webSensors()
         "<div class='container'>" +
         renderParameterRow("BMP180 On", "sensor_bmp180_on", config.sensor_bmp180_on) + 
         renderParameterRow("DHT22 On", "sensor_dht22_on", config.sensor_dht22_on) + 
-        renderParameterRow("DS18B20 On", "sensor_ds18b29_on", config.sensor_ds18b20_on) + 
+        renderParameterRow("DS18B20 On", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
         renderParameterRow("Analog (ADC) On", "sensor_analog_on", config.sensor_analog_on) + 
         "<hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/sensors\");'>Зберегти</a>" +
@@ -405,7 +422,7 @@ void initWiFi()
     delay(1000);
     WiFi.mode(WIFI_AP_STA);
     WiFi.onEvent(handleWiFiEvent);
-    WiFi.begin(config.sta_ssid);
+    WiFi.begin(config.sta_ssid, config.sta_pwd);
     if (atoi(config.static_ip_mode) == 1)
     {
         Serial.println("Wifi: use static IP");
@@ -426,7 +443,8 @@ void initWiFi()
     if (WiFi.status() == WL_CONNECTED)
     {
         Serial.println(String("Wifi: connected, creating AP ") + config.module_name);
-        WiFi.softAP(config.module_name);
+        Serial.println(String("with password:  ") + config.module_pwd);
+        WiFi.softAP(config.module_name, config.module_pwd);
         Serial.print("Wifi: connected, IP = ");
         Serial.print(WiFi.localIP());
         Serial.println();
@@ -434,9 +452,9 @@ void initWiFi()
     else
     {
         Serial.println(String("Wifi: not connected, creating AP ") + config.module_name);
-        Serial.println(String("Pass") + config.module_pwd);
+        Serial.println(String("with password:  ") + config.module_pwd);
         WiFi.mode(WIFI_AP);
-        WiFi.softAP(config.module_name);
+        WiFi.softAP(config.module_name, config.module_pwd);
     }
 
     Serial.println("Wifi: started\r\n");
@@ -732,6 +750,15 @@ float getHumidityForJson(float value)
     return (isnan(value) || value > 100) ? 0 : value;
 }
 
+void printAddress(DeviceAddress deviceAddress)
+{
+  for (uint8_t i = 0; i < 8; i++)
+  {
+    if (deviceAddress[i] < 16) Serial.print("0");
+    Serial.print(deviceAddress[i], HEX);
+  }
+}
+
 void sendSensorsData()
 {
     // Use WiFiClient class to create TCP connections
@@ -792,6 +819,76 @@ void sendSensorsData()
       }
 }
 
+void sendNarodmon()
+{
+    // Use WiFiClient class to create TCP connections
+      WiFiClient client;
+      const int httpPort = 8283;
+      if (!client.connect("narodmon.ru", httpPort)) {
+        Serial.println("connection failed");
+        return;
+      }
+    
+      String dht_temp = String(getTempForJson(data1.temp)),
+             dht_humidity = String(getHumidityForJson(data1.humidity)),
+             ds18b20_temp = String(getTempForJson(data2.temp)),
+             bmp180_temp = String(getTempForJson(data3.temp)),
+             bmp180_pressure = String(data3.pressure * 0.0295333727 * 25.4),
+             adc_val = String(getADCForJson(data4.adc));
+             
+      client.print("#");
+      client.print(WiFi.macAddress()); // МАС ESP8266       
+      client.print("#");
+      client.print("ESP8266"); // Назва пристрою
+      client.println();
+      
+      if (atoi(config.sensor_dht22_on) == 1) {
+        client.print("#T1#");
+        client.print(dht_temp);
+        client.print("#DHT22 Temp#");
+        client.println();
+        client.print("#H1#");
+        client.print(dht_humidity);
+        client.print("#DHT22 Humidity#");
+        client.println();
+      }
+      
+      if (atoi(config.sensor_ds18b20_on) == 1) {
+        client.print("#T2#");
+        client.print(ds18b20_temp);
+        client.print("#DS18B20 Temp#");
+        client.println();
+      }
+      
+      if (atoi(config.sensor_bmp180_on) == 1) {
+
+        client.print("#T3#");
+        client.print(bmp180_temp);
+        client.print("#BMP180 Temp#");
+        client.println();
+        client.print("#P1#");
+        client.print(bmp180_pressure);
+        client.print("#BMP180 Pressure#");
+        client.println();
+      }
+
+      if (atoi(config.sensor_analog_on) == 1) {  
+        client.print("#ADC#");
+        client.print(adc_val);
+        client.print("#Analog pin data#");
+        client.println();
+      }
+      
+      client.println("##");
+      Serial.println("\r Sensors data send to narodmod.ru \r");
+      // Read all the lines of the reply from server and print them to Serial
+      while(client.available()){
+        String line = client.readStringUntil('\r');
+        Serial.print(line);
+      }
+}
+
+
 void loop()
 {
     ESP.wdtDisable();
@@ -816,13 +913,17 @@ void loop()
                 Serial.println("\r\nGetting sensors data...");
                 requestSensorValues();
                 renderSensorValues();
-                if (WiFi.status() == WL_CONNECTED)
-                {
-                    sendSensorsData();
+                
+                  if (WiFi.status() == WL_CONNECTED)
+                  {
+                    if (atoi(config.ts_toogle) == 1) {
+                        sendSensorsData();
+                    }
+                    if (atoi(config.narodmon_toogle) == 1) {
+                        sendNarodmon();
+                    }
                 }
             }
         }
     }
 }
-
-
