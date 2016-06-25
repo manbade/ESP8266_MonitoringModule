@@ -234,7 +234,8 @@ void webSetup()
         renderParameterRow("Увімкнути експорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
         renderParameterRow("Увімкнути експорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
         renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
-        renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) +  
+        renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) + 
+        "<p>Для народного моніторингу мін.інтервал експорту <p> </p>300 секунд (5 хвилин)</p>" +
         "<hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/setup\");'>Зберегти</a>" +
         "<p>Після збереження внесених змін, необхідно <p> </p>перезавантажити систему.</p></div>" +
