@@ -81,10 +81,17 @@ void rebootESP()
 void webRoot()
 {
     Serial.println("\r\nServer: request ROOT");
+    String ssid_h_name;
+    if (WiFi.status() == WL_CONNECTED)
+    { 
+      ssid_h_name = "<p>Ви підключені до мережі <b id='ssid_name'>" + String(config.sta_ssid) + "</b></p>";
+    }
+    else { ssid_h_name = "";}
 
     String data = 
         renderTitle(config.module_name, "Головна") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
         String(F("<h2>Інтерфейс ")) + config.module_name + String(F("</h2>")) +
+        ssid_h_name +
         String(F("<div class='container'>")) +
         renderParameterRow("ID системи", "", config.module_id, true) + 
         renderParameterRow("Назва системи", "", config.module_name, true) + 
@@ -149,7 +156,6 @@ void webSetup()
         payload.toCharArray(config.narodmon_toogle, sizeof(config.narodmon_toogle));
         config_changed = true;
     }
-    
     payload = WebServer.arg("ts_toogle");
     if (payload.length() > 0)
     {
@@ -162,7 +168,6 @@ void webSetup()
         payload.toCharArray(config.thing_speak_api_key, sizeof(config.thing_speak_api_key));
         config_changed = true;
     }
-
     payload = WebServer.arg("static_ip_mode");
     if (payload.length() > 0)
     {
@@ -193,16 +198,32 @@ void webSetup()
         payload.toCharArray(config.get_data_delay, sizeof(config.get_data_delay));
         config_changed = true;
     }
-
+    String ssid_list, ssid_h_name;
+    int numSsid = WiFi.scanNetworks();
+          // print the name for each network found:
+          for (int thisNet = 0; thisNet < numSsid; thisNet++) {
+            String ssid_str = WiFi.SSID(thisNet) + " Signal: " + WiFi.RSSI(thisNet) + " dBm",
+                   ssid_name =  WiFi.SSID(thisNet);
+            ssid_list += renderParameterList(ssid_name, ssid_str); 
+          }
+    if (WiFi.status() == WL_CONNECTED)
+    { 
+      ssid_h_name = "<p>Ви підключені до мережі <b id='ssid_name'>" + String(config.sta_ssid) + "</b></p>";
+    }
+    else { ssid_h_name = "";}
     String data = 
         renderTitle(config.module_name, "Налаштування") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
         "<h2>Налаштування системи</h2>" +
+        ssid_h_name +
         "<div class='container'>" +
         renderParameterRow("ID системи", "module_id", config.module_id) + 
         renderParameterRow("Назва системи", "module_name", config.module_name) + 
         renderParameterRow("Пароль доступу до системи", "module_pwd", config.module_pwd, false, true) + 
         "<hr/>" +
-        renderParameterRow("SSID (Назва бездротової мережі)", "sta_ssid", config.sta_ssid) + 
+        "<div class='input-group'><label class='input_label' for='sta_ssid'>SSID (Назва бездротової мережі)</label><select id='sta_ssid' class='form-control'>" +
+        ssid_list +
+        "<select></div>" +
+//        renderParameterRow("SSID (Назва бездротової мережі)", "sta_ssid", config.sta_ssid) + 
         renderParameterRow("Пароль", "sta_pwd", config.sta_pwd, false, true) + 
         "<hr/>" +
         renderParameterRow("Режим статичного IP ", "static_ip_mode", config.static_ip_mode) + 
@@ -333,7 +354,7 @@ void initWebServer()
     WebServer.on("/", webRoot);
     WebServer.on("/setup", webSetup);
     // WebServer.on("/time", webTime);
-    WebServer.on("/reboot", webReboot);
+//    WebServer.on("/reboot", webReboot);
     WebServer.on("/sensors", webSensors);
     WebServer.on("/styles.css", webStyles);
     WebServer.onNotFound(handleNotFound);
@@ -888,11 +909,10 @@ void sendNarodmon()
       }
 }
 
-
 void loop()
 {
-    ESP.wdtDisable();
     WebServer.handleClient();
+
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= ONE_SECOND)
@@ -910,7 +930,7 @@ void loop()
 //            renderDateTime();        
             if (currentSensorCycle % atoi(config.get_data_delay) == 0)
             {
-                Serial.println("\r\nGetting sensors data...");
+//                Serial.println("\r\nGetting sensors data...");
                 requestSensorValues();
                 renderSensorValues();
                 

@@ -10,8 +10,8 @@ const char mainMenu[] PROGMEM = "<div class='header'><ul>\
 <li><a href='/'>Головна</a></li>\
 <li><a href='/setup'>Налаштування</a></li>\
 <li><a href='/sensors'>Давачі даних</a></li>\
-<li><a class='reboot' href='/reboot?reboot_delay=%d'>Перезавантаження</a></li>\
 </ul></div>";
+//<li><a class='reboot' href='/reboot?reboot_delay=%d'>Перезавантаження</a></li>
 
 const char stylesBootstrap[] PROGMEM =
 "a {text-decoration: none;}\
@@ -137,24 +137,19 @@ console.log('Reboot!');\
 
 const char scripts[] PROGMEM =
 "<script type='text/javascript'>\
-function \
-setNowDateTime() {\
-var today = new Date();\
-var dd = today.getDate();\
-var mm = today.getMonth() + 1;\
-var yyyy = today.getFullYear();\
-var h = today.getHours();\
-var m = today.getMinutes();\
-var s = today.getSeconds();\
-document.getElementById('day').value = dd;\
-document.getElementById('month').value = mm;\
-document.getElementById('year').value = yyyy;\
-document.getElementById('hour').value = h;\
-document.getElementById('minute').value = m;\
-document.getElementById('second').value = s;\
-}\
-function \
-saveFormData(pageToRecall) {\
+window.onload = function() {\
+    var e = document.getElementById('sta_ssid'),\
+        ssid_name_tag = document.getElementById('ssid_name'),\
+        ssid_tag_val = ssid_name_tag.innerText;\
+    if (e) {\
+        for (var i = 0; i < e.length; i++) {\
+            if (e.options[i].value === ssid_tag_val) {\
+                e.options[i].selected = true;\
+            }\
+        }\
+    }\
+};\
+function saveFormData(pageToRecall) {\
 var data = [];\
 var inputs = document.getElementsByTagName('input');\
 for (var i = 0; i < inputs.length; i++) {\
@@ -163,7 +158,11 @@ if (input.type == 'text' || input.type == 'password') {\
 data.push({key: input.id, value: input.value});\
 }\
 }\
-console.log(data);\
+var e = document.getElementById('sta_ssid');\
+if(e) {\
+var selected_opt = e.options[e.selectedIndex].value;\
+data.push({key: 'sta_ssid', value: selected_opt});\
+}\
 var url = pageToRecall + '?';\
 for (var j = 0; j < data.length; j++) {\
 var param = data[j];\
@@ -178,6 +177,7 @@ const char bodyStart[] PROGMEM = "<body><div id='main_block'>";
 const char bodyEnd[] PROGMEM = "</div></body></html>";
 
 String renderParameterRow(String paramName, String paramId, String paramValue, bool isReadonly = false, bool isPassword = false);
+String renderParameterList(String paramValue,  String paramDesc, bool isSelected = false);
 String renderTitle(String pageName, String moduleName);
 String renderAlert(String type, String text);
 String renderStyles(String styles);
