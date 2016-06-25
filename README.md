@@ -1,3 +1,2 @@
 # ESP8266_MonitoringModule
-Support cloud services Narodmon.ru and ThingSpeak 
-Support DS18B20, DHT11/22, BMP180 and Analog data (ADC pin)
+Реалізована підтримка експорту даних на такі хмарні сервіси як: Narodmon.ru та ThingSpeak. Підтримуються такі давачі даних: DS18B20, DHT11/22, BMP180 та дані з аналогового вивиоду ADC.
