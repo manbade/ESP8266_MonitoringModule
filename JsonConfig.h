@@ -48,11 +48,11 @@ public:
     char static_gateway[32] = "192.168.1.1";
     char static_subnet[32] = "255.255.255.0";
 
-    char get_data_delay[32] = "40";
+    char get_data_delay[32] = "300";
     char reboot_delay[32] = "3";
 
     char sensor_bmp180_on[32] = "0";
-    char sensor_dht22_on[32] = "1";
+    char sensor_dht22_on[32] = "0";
     char sensor_ds18b20_on[32] = "0";
     char sensor_analog_on[32] = "0";
 
