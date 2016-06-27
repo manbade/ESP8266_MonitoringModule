@@ -234,7 +234,7 @@ void webSetup()
         renderParameterRow("Eкспорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
         renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
         renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) +  
-        "<hr/>" +
+        "<p>НароднийМоніторинг вимагає мін.інтервалу експорту в 5 хвилин (300 секунд)</p><hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/setup\");'>Зберегти</a>" +
         "</div>" +
         FPSTR(bodyEnd);
