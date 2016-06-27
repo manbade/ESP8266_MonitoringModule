@@ -105,7 +105,7 @@ void webRoot()
         renderParameterRow("Темп. DS18B20, C", "", data2.tempStr, true) + 
         renderParameterRow("Темп. BMP180, C", "", data3.tempStr, true) + 
         renderParameterRow("Атм.тиск BMP180, мм.рт.ст", "", data3.pressureStr, true) + 
-        renderParameterRow("Дані від аналогового давача даних", "", data4.adcStr, true) + 
+        renderParameterRow("ADC", "", data4.adcStr, true) + 
         "<hr/>" +
         renderParameterRow("Вільно пам'яті, байт", "", getFreeMemory(), true) + 
         String(F("</div>")) +
@@ -220,25 +220,23 @@ void webSetup()
         renderParameterRow("Назва системи", "module_name", config.module_name) + 
         renderParameterRow("Пароль доступу до системи", "module_pwd", config.module_pwd, false, true) + 
         "<hr/>" +
-        "<div class='input-group'><label class='input_label' for='sta_ssid'>SSID (Назва бездротової мережі)</label><select id='sta_ssid' class='form-control'>" +
+        "<div class='input-group'><label class='input_label' for='sta_ssid'>SSID</label><select id='sta_ssid' class='form-control'>" +
         ssid_list +
         "<select></div>" +
-//        renderParameterRow("SSID (Назва бездротової мережі)", "sta_ssid", config.sta_ssid) + 
         renderParameterRow("Пароль", "sta_pwd", config.sta_pwd, false, true) + 
-        "<hr/>" +
+        "<p>Для збереження внесених змін, необхідно перезавантажити систему.</p><hr/>" +
         renderParameterRow("Режим статичного IP ", "static_ip_mode", config.static_ip_mode) + 
         renderParameterRow("Статичний IP", "static_ip", config.static_ip) + 
         renderParameterRow("Основний шлюз", "static_gateway", config.static_gateway) + 
         renderParameterRow("Маска мережі", "static_subnet", config.static_subnet) + 
         "<hr/>" +
-        renderParameterRow("Увімкнути експорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
-        renderParameterRow("Увімкнути експорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
+        renderParameterRow("Eкспорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
+        renderParameterRow("Eкспорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
         renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
-        renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) + 
-        "<p>Для народного моніторингу мін.інтервал експорту <p> </p>300 секунд (5 хвилин)</p>" +
+        renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) +  
         "<hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/setup\");'>Зберегти</a>" +
-        "<p>Після збереження внесених змін, необхідно <p> </p>перезавантажити систему.</p></div>" +
+        "</div>" +
         FPSTR(bodyEnd);
 
     WebServer.send(200, "text/html", data);
@@ -331,7 +329,7 @@ void webStyles()
 {
     Serial.println("\r\nServer: request STYLES");
 
-    String stylesText = String("") + FPSTR(styles) + FPSTR(stylesBootstrap) + FPSTR(stylesBootstrapAlerts);
+    String stylesText = String("") + FPSTR(styles);
     WebServer.send(200, "text/css", stylesText);
 
     Serial.println("Server: request STYLES sent");
@@ -508,7 +506,7 @@ void initSensors()
     
     if (atoi(config.sensor_bmp180_on) == 1)
     {
-      Wire.begin(2, 0); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
+//      Wire.begin(2, 0); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
       if (bmp180.begin())
       {
           bmp180initialized = true;
