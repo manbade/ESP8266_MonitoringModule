@@ -233,8 +233,12 @@ void webSetup()
         renderParameterRow("Eкспорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
         renderParameterRow("Eкспорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
         renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
-        renderParameterRow("Інтервал експорту даних, сек", "get_data_delay", config.get_data_delay) +  
+        "<div class='input-group'><label class='input_label' for='get_data_delay'>Інтервал експорту даних</label><select id='get_data_delay' class='form-control'>" +
+        delay_list() +
+        "<select></div>" +
+//        renderParameterRow("Інтервал експорту даних", "get_data_delay", config.get_data_delay) +  
         "<p>НароднийМоніторинг вимагає мін.інтервалу експорту в 5 хвилин (300 секунд)</p><hr/>" +
+        "<span id='data_delay' style='display:none;'>" + String(config.get_data_delay) + "</span>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/setup\");'>Зберегти</a>" +
         "</div>" +
         FPSTR(bodyEnd);
@@ -908,10 +912,16 @@ void sendNarodmon()
       }
 }
 
+void stopWiFiAndSleep() {
+  WiFi.disconnect();
+  WiFi.mode(WIFI_OFF);
+//  WiFi.forceSleepBegin();
+//  delay(1);
+}
+
 void loop()
 {
     WebServer.handleClient();
-
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= ONE_SECOND)
@@ -929,7 +939,7 @@ void loop()
 //            renderDateTime();        
             if (currentSensorCycle % atoi(config.get_data_delay) == 0)
             {
-//                Serial.println("\r\nGetting sensors data...");
+                Serial.println("\r\nGetting sensors data...");
                 requestSensorValues();
                 renderSensorValues();
                 
@@ -941,7 +951,22 @@ void loop()
                     if (atoi(config.narodmon_toogle) == 1) {
                         sendNarodmon();
                     }
-                }
+                   }
+                   else {
+                    WiFi.mode(WIFI_AP_STA);
+                    WiFi.begin(config.sta_ssid, config.sta_pwd);
+                    while (WiFi.status() != WL_CONNECTED) 
+                    delay(300);
+
+                    if (atoi(config.ts_toogle) == 1) {
+                        sendSensorsData();
+                    }
+                    if (atoi(config.narodmon_toogle) == 1) {
+                        sendNarodmon();
+                    }
+                    }
+//                int ds_time = (atoi(config.get_data_delay) - 5)*1000000;
+                stopWiFiAndSleep();
             }
         }
     }
