@@ -66,6 +66,19 @@ window.onload = function() {\
         }\
     }\
 };\
+window.onload = function() {\
+    var e = document.getElementById('get_data_delay'),\
+        name_tag = document.getElementById('data_delay'),\
+        tag_val = name_tag.innerText;\
+    console.log(tag_val);\
+    if (e) {\
+        for (var i = 0; i < e.length; i++) {\
+            if (e.options[i].value == tag_val) {\
+                e.options[i].selected = true;\
+            }\
+        }\
+    }\
+};\
 function saveFormData(pageToRecall) {\
 var data = [];\
 var inputs = document.getElementsByTagName('input');\
@@ -75,10 +88,15 @@ if (input.type == 'text' || input.type == 'password') {\
 data.push({key: input.id, value: input.value});\
 }\
 }\
-var e = document.getElementById('sta_ssid');\
-if(e) {\
-var selected_opt = e.options[e.selectedIndex].value;\
+var e_ssid = document.getElementById('sta_ssid');\
+if(e_ssid) {\
+var selected_opt = e_ssid.options[e_ssid.selectedIndex].value;\
 data.push({key: 'sta_ssid', value: selected_opt});\
+}\
+var e1 = document.getElementById('get_data_delay');\
+if (e1) {\
+var selected_opt1 = e1.options[e1.selectedIndex].value;\
+data.push({key: 'get_data_delay',value: selected_opt1});\
 }\
 var url = pageToRecall + '?';\
 for (var j = 0; j < data.length; j++) {\
@@ -94,7 +112,8 @@ const char bodyStart[] PROGMEM = "<body><div id='main_block'>";
 const char bodyEnd[] PROGMEM = "</div></body></html>";
 
 String renderParameterRow(String paramName, String paramId, String paramValue, bool isReadonly = false, bool isPassword = false);
-String renderParameterList(String paramValue,  String paramDesc, bool isSelected = false);
+String renderParameterList(String paramValue,  String paramDesc);
+String delay_list();
 String renderTitle(String pageName, String moduleName);
 String renderAlert(String type, String text);
 String renderStyles(String styles);
@@ -102,4 +121,3 @@ String renderSsid(WiFiData data);
 String renderMenu(String delay);
 
 #endif
-
