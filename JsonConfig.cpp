@@ -8,8 +8,9 @@ bool JsonConfig::printConfig()
     Serial.print(F("module_name   : "));   Serial.println(module_name);
     Serial.print(F("sta_ssid      : "));   Serial.println(sta_ssid);
     Serial.print(F("sta_pwd       : "));   Serial.println(sta_pwd);
+    Serial.print(F("hidden_toogle : "));   Serial.println(hidden_toogle);
 
-    Serial.print(F("static_ip_mode: "));   Serial.println(static_ip_mode);
+    Serial.print(F("static_ip_toogle: "));   Serial.println(static_ip_toogle);
     Serial.print(F("static_ip     : "));   Serial.println(static_ip);
     Serial.print(F("static_gateway: "));   Serial.println(static_gateway);
     Serial.print(F("static_subnet : "));   Serial.println(static_subnet);
@@ -76,8 +77,9 @@ bool JsonConfig::loadConfig()
     if (json.containsKey("module_pwd")) { const char* module_pwd_char = json["module_pwd"]; sprintf_P(module_pwd, ("%s"), module_pwd_char); }
     if (json.containsKey("sta_ssid")) { const char* sta_ssid_char = json["sta_ssid"]; sprintf_P(sta_ssid, ("%s"), sta_ssid_char); }
     if (json.containsKey("sta_pwd")) { const char* sta_pwd_char = json["sta_pwd"]; sprintf_P(sta_pwd, ("%s"), sta_pwd_char); }
+    if (json.containsKey("hidden_toogle")) { const char* hidden_toogle_char = json["hidden_toogle"]; sprintf_P(hidden_toogle, ("%s"), hidden_toogle_char); }
 
-    if (json.containsKey("static_ip_mode")) { const char* static_ip_mode_char = json["static_ip_mode"]; sprintf_P(static_ip_mode, ("%s"), static_ip_mode_char); }
+    if (json.containsKey("static_ip_toogle")) { const char* static_ip_toogle_char = json["static_ip_toogle"]; sprintf_P(static_ip_toogle, ("%s"), static_ip_toogle_char); }
     if (json.containsKey("static_ip")) { const char* static_ip_char = json["static_ip"]; sprintf_P(static_ip, ("%s"), static_ip_char); }
     if (json.containsKey("static_gateway")) { const char* static_gateway_char = json["static_gateway"]; sprintf_P(static_gateway, ("%s"), static_gateway_char); }
     if (json.containsKey("static_subnet")) { const char* static_subnet_char = json["static_subnet"]; sprintf_P(static_subnet, ("%s"), static_subnet_char); }
@@ -120,8 +122,9 @@ bool JsonConfig::saveConfig()
     json["module_pwd"] = module_pwd;
     json["sta_ssid"] = sta_ssid;
     json["sta_pwd"] = sta_pwd;
+    json["hidden_toogle"] = hidden_toogle;
 
-    json["static_ip_mode"] = static_ip_mode;
+    json["static_ip_toogle"] = static_ip_toogle;
     json["static_ip"] = static_ip;
     json["static_gateway"] = static_gateway;
     json["static_subnet"] = static_subnet;

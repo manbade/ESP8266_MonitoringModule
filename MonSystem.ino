@@ -90,7 +90,7 @@ void webRoot()
 
     String data = 
         renderTitle(config.module_name, "Головна") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
-        String(F("<h2>Інтерфейс ")) + config.module_name + String(F("</h2>")) +
+        String(F("<h2>")) + config.module_name + String(F("</h2>")) +
         ssid_h_name +
         String(F("<div class='container'>")) +
         renderParameterRow("ID системи", "", config.module_id, true) + 
@@ -150,6 +150,12 @@ void webSetup()
         payload.toCharArray(config.sta_pwd, sizeof(config.sta_pwd));
         config_changed = true;
     }
+    payload = WebServer.arg("hidden_toogle");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.hidden_toogle, sizeof(config.hidden_toogle));
+        config_changed = true;
+    }
     payload = WebServer.arg("narodmon_toogle");
     if (payload.length() > 0)
     {
@@ -168,10 +174,10 @@ void webSetup()
         payload.toCharArray(config.thing_speak_api_key, sizeof(config.thing_speak_api_key));
         config_changed = true;
     }
-    payload = WebServer.arg("static_ip_mode");
+    payload = WebServer.arg("static_ip_toogle");
     if (payload.length() > 0)
     {
-        payload.toCharArray(config.static_ip_mode, sizeof(config.static_ip_mode));
+        payload.toCharArray(config.static_ip_toogle, sizeof(config.static_ip_toogle));
         config_changed = true;
     }
     payload = WebServer.arg("static_ip");
@@ -219,13 +225,14 @@ void webSetup()
         renderParameterRow("ID системи", "module_id", config.module_id) + 
         renderParameterRow("Назва системи", "module_name", config.module_name) + 
         renderParameterRow("Пароль доступу до системи", "module_pwd", config.module_pwd, false, true) + 
+        renderParameterRow("Прихований SSID", "hidden_toogle", config.hidden_toogle) +
         "<hr/>" +
         "<div class='input-group'><label class='input_label' for='sta_ssid'>SSID</label><select id='sta_ssid' class='form-control'>" +
         ssid_list +
         "<select></div>" +
-        renderParameterRow("Пароль", "sta_pwd", config.sta_pwd, false, true) + 
+        renderParameterRow("Пароль", "sta_pwd", config.sta_pwd, false, true) +  
         "<p>Для збереження внесених змін, необхідно перезавантажити систему.</p><hr/>" +
-        renderParameterRow("Режим статичного IP ", "static_ip_mode", config.static_ip_mode) + 
+        renderParameterRow("Режим статичного IP ", "static_ip_toogle", config.static_ip_toogle) + 
         renderParameterRow("Статичний IP", "static_ip", config.static_ip) + 
         renderParameterRow("Основний шлюз", "static_gateway", config.static_gateway) + 
         renderParameterRow("Маска мережі", "static_subnet", config.static_subnet) + 
@@ -447,7 +454,7 @@ void initWiFi()
     WiFi.mode(WIFI_AP_STA);
     WiFi.onEvent(handleWiFiEvent);
     WiFi.begin(config.sta_ssid, config.sta_pwd);
-    if (atoi(config.static_ip_mode) == 1)
+    if (atoi(config.static_ip_toogle) == 1)
     {
         Serial.println("Wifi: use static IP");
         IPAddress staticIP = stringToIp(config.static_ip);
@@ -468,7 +475,13 @@ void initWiFi()
     {
         Serial.println(String("Wifi: connected, creating AP ") + config.module_name);
         Serial.println(String("with password:  ") + config.module_pwd);
+        if(atoi(config.hidden_toogle) == 1) {
+        Serial.println("AP options: hidden ");
+        WiFi.softAP(config.module_name, config.module_pwd, 1, 1);
+        }
+        else {
         WiFi.softAP(config.module_name, config.module_pwd);
+        }
         Serial.print("Wifi: connected, IP = ");
         Serial.print(WiFi.localIP());
         Serial.println();
