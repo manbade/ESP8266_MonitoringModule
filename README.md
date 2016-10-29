@@ -1,6 +1,6 @@
 # ESP8266 MeteoMonitoring Module with web-interface
 
-![alt tag](https://habrastorage.org/files/463/636/772/463636772e13462184ef3c1e4fb4c57a.png)
+![alt tag](https://habrastorage.org/files/534/1b8/ec6/5341b8ec6aca4be5a98198a8218210de.PNG)
 ![alt tag](https://habrastorage.org/files/5af/e07/81f/5afe0781fa8245e7bd4ed50a54437ec5.png) 
 
 Реалізована підтримка експорту даних на такі хмарні сервіси як: Narodmon.ru та ThingSpeak. Підтримуються такі давачі даних: DS18B20, DHT11/22, BMP180 та дані з аналогового вивиоду ADC.
