@@ -52,12 +52,12 @@ public:
     char reboot_delay[32] = "3";
 
     char sensor_bmp180_on[32] = "0";
-    char sensor_dht22_on[32] = "0";
+    char sensor_dht_on[32] = "1";
     char sensor_ds18b20_on[32] = "0";
     char sensor_analog_on[32] = "0";
 
     char narodmon_toogle[32] = "0";
-    char ts_toogle[32] = "0";
+    char ts_toogle[32] = "1";
     char thing_speak_api_key[32] = "6NSWJ0EQD330HG4F";
 
 private:

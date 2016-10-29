@@ -146,7 +146,7 @@ String getUptimeData()
     long day = (rollover * 50) + (secsUp / (60 * 60 * 24));  //First portion takes care of a rollover [around 50 days]
 
     char value_buff[120];
-    sprintf_P(value_buff, (const char *)F("%d day(s) %02d h %02d m"), day, hour, minute);
+    sprintf_P(value_buff, (const char *)F("%d день %02d г %02d хв %02d с"), day, hour, minute, second);
     return value_buff;
 }
 

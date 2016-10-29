@@ -22,7 +22,7 @@ bool JsonConfig::printConfig()
     Serial.print(F("thing_speak_api_key  : "));   Serial.println(thing_speak_api_key);
 
     Serial.print(F("sensor_bmp180_on  : "));   Serial.println(sensor_bmp180_on);
-    Serial.print(F("sensor_dht22_on   : "));   Serial.println(sensor_dht22_on);
+    Serial.print(F("sensor_dht_on   : "));   Serial.println(sensor_dht_on);
     Serial.print(F("sensor_ds18b20_on  : "));   Serial.println(sensor_ds18b20_on);
     Serial.print(F("sensor_analog_on  : "));   Serial.println(sensor_analog_on);
     
@@ -90,7 +90,7 @@ bool JsonConfig::loadConfig()
     if (json.containsKey("thing_speak_api_key")) { const char* thing_speak_api_key_char = json["thing_speak_api_key"]; sprintf_P(thing_speak_api_key, ("%s"), thing_speak_api_key_char); }
 
     if (json.containsKey("sensor_bmp180_on")) { const char* sensor_bmp180_on_char = json["sensor_bmp180_on"]; sprintf_P(sensor_bmp180_on, ("%s"), sensor_bmp180_on_char); }
-    if (json.containsKey("sensor_dht22_on")) { const char* sensor_dht22_on_char = json["sensor_dht22_on"]; sprintf_P(sensor_dht22_on, ("%s"), sensor_dht22_on_char); }
+    if (json.containsKey("sensor_dht_on")) { const char* sensor_dht_on_char = json["sensor_dht_on"]; sprintf_P(sensor_dht_on, ("%s"), sensor_dht_on_char); }
     if (json.containsKey("sensor_ds18b20_on")) { const char* sensor_ds18b20_on_char = json["sensor_ds18b20_on"]; sprintf_P(sensor_ds18b20_on, ("%s"), sensor_ds18b20_on_char); }
     if (json.containsKey("sensor_analog_on")) { const char* sensor_analog_on_char = json["sensor_analog_on"]; sprintf_P(sensor_analog_on, ("%s"), sensor_analog_on_char); }
 
@@ -134,7 +134,7 @@ bool JsonConfig::saveConfig()
     json["thing_speak_api_key"] = thing_speak_api_key;
 
     json["sensor_bmp180_on"] = sensor_bmp180_on;
-    json["sensor_dht22_on"] = sensor_dht22_on;
+    json["sensor_dht_on"] = sensor_dht_on;
     json["sensor_ds18b20_on"] = sensor_ds18b20_on;
     json["sensor_analog_on"] = sensor_analog_on;
 
@@ -145,4 +145,3 @@ bool JsonConfig::saveConfig()
 
     return true;
 }
-

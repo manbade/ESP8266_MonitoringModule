@@ -31,9 +31,8 @@ String renderStyles(String styles)
     return String("<style>" + styles + "</style>");
 }
 
-String renderMenu(String delay)
+String renderMenu()
 {
     String text = FPSTR(mainMenu);
-    text.replace("%d", delay);
     return text;
 }

@@ -19,8 +19,8 @@ JsonConfig config;
 WiFiData wiFiDatas[MAX_WIFI_COUNT];
 
 #define DHTPIN 2
-#define DHTTYPE DHT22
-DHT dht22(DHTPIN, DHTTYPE);
+#define DHTTYPE DHT21
+DHT dht(DHTPIN, DHTTYPE);
 SensorData data1;
 
 // Data wire is plugged into port 2 on the Arduino
@@ -40,7 +40,7 @@ SensorData data3;
 SensorData data4;
 
 bool bmp180initialized = false;
-bool dht22initialized = false;
+bool dhtinitialized = false;
 bool ds18b20initialized = false;
 
 unsigned long previousMillis = 0;
@@ -89,7 +89,7 @@ void webRoot()
     else { ssid_h_name = "";}
 
     String data = 
-        renderTitle(config.module_name, "Головна") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
+        renderTitle(config.module_name, "Головна") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         String(F("<h2>Інтерфейс ")) + config.module_name + String(F("</h2>")) +
         ssid_h_name +
         String(F("<div class='container'>")) +
@@ -212,7 +212,7 @@ void webSetup()
     }
     else { ssid_h_name = "";}
     String data = 
-        renderTitle(config.module_name, "Налаштування") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
+        renderTitle(config.module_name, "Налаштування") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         "<h2>Налаштування системи</h2>" +
         ssid_h_name +
         "<div class='container'>" +
@@ -264,10 +264,10 @@ void webSensors()
         payload.toCharArray(config.sensor_bmp180_on, sizeof(config.sensor_bmp180_on));
         config_changed = true;
     }
-    payload = WebServer.arg("sensor_dht22_on");
+    payload = WebServer.arg("sensor_dht_on");
     if (payload.length() > 0)
     {
-        payload.toCharArray(config.sensor_dht22_on, sizeof(config.sensor_dht22_on));
+        payload.toCharArray(config.sensor_dht_on, sizeof(config.sensor_dht_on));
         config_changed = true;
     }
     payload = WebServer.arg("sensor_ds18b20_on");
@@ -285,16 +285,16 @@ void webSensors()
 //    payload = WebServer.arg("reboot_delay");
 //    if (payload.length() > 0)
 //    {
-//        payload.toCharArray(config.reboot_delay, sizeof(config.reboot_delay));
+//        payload.toCharArray(, sizeof());
 //        config_changed = true;
 //    }
 
     String data = 
-        renderTitle(config.module_name, "Давачі даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
+        renderTitle(config.module_name, "Давачі даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         "<h2>Давачі даних</h2>" +
         "<div class='container'>" +
         renderParameterRow("BMP180 On", "sensor_bmp180_on", config.sensor_bmp180_on) + 
-        renderParameterRow("DHT22 On", "sensor_dht22_on", config.sensor_dht22_on) + 
+        renderParameterRow("dht On", "sensor_dht_on", config.sensor_dht_on) + 
         renderParameterRow("DS18B20 On", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
         renderParameterRow("Analog (ADC) On", "sensor_analog_on", config.sensor_analog_on) + 
         "<hr/>" +
@@ -317,9 +317,9 @@ void webReboot()
     Serial.println("\r\nServer: request REBOOT");
 
     String data =
-        renderTitle(config.module_name, "Перезавантаження") + FPSTR(stylesInclude) +
-        FPSTR(rebootScripts) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
-        renderAlert("info", String("<strong id='info'>Систему буде перезавантажено через:  ") + config.reboot_delay + " секунд</strong>") +
+        renderTitle(config.module_name, "Перезавантажити") + FPSTR(stylesInclude) +
+        FPSTR(rebootScripts) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
+        renderAlert("info", String("<strong id='info'>Систему буде перезавантажено через  ") + config.reboot_delay + " секунди</strong>") +
         FPSTR(bodyEnd);
 
     WebServer.send(200, "text/html", data);
@@ -344,7 +344,7 @@ void handleNotFound()
     Serial.println("\r\nServer: not found");
 
     String data =
-        renderTitle(config.module_name, "Page not found") + FPSTR(stylesInclude) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu(config.reboot_delay) +
+        renderTitle(config.module_name, "Page not found") + FPSTR(stylesInclude) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         renderAlert("danger", String("Page <strong>") + WebServer.uri() + "</strong> not found.") +
         FPSTR(bodyEnd);
 
@@ -357,7 +357,7 @@ void initWebServer()
     WebServer.on("/", webRoot);
     WebServer.on("/setup", webSetup);
     // WebServer.on("/time", webTime);
-//    WebServer.on("/reboot", webReboot);
+    WebServer.on("/reboot", webReboot);
     WebServer.on("/sensors", webSensors);
     WebServer.on("/styles.css", webStyles);
     WebServer.onNotFound(handleNotFound);
@@ -498,9 +498,9 @@ void initWiFi()
 
 void initSensors()
 {
-    if (atoi(config.sensor_dht22_on) == 1)
+    if (atoi(config.sensor_dht_on) == 1)
     {
-      dht22.begin();
+      dht.begin();
     }
 
     if (atoi(config.sensor_ds18b20_on) == 1)
@@ -565,10 +565,10 @@ void setup()
      return data;
  }
 
-SensorData getDht22Data()
+SensorData getdhtData()
 {
-    float h = dht22.readHumidity();
-    float t = dht22.readTemperature();
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
     SensorData data;
     data.humidity = h;
     data.temp = t;
@@ -689,9 +689,9 @@ void renderAPStatus(String status, int r, int g, int b)
 
 void requestSensorValues()
 {
-    if (atoi(config.sensor_dht22_on) == 1)
+    if (atoi(config.sensor_dht_on) == 1)
     {
-        data1 = getDht22Data();
+        data1 = getdhtData();
     }
 
     if (atoi(config.sensor_bmp180_on) == 1)
@@ -712,7 +712,7 @@ void requestSensorValues()
 
 void renderSensorValues()
 {
-    if (atoi(config.sensor_dht22_on) == 1)
+    if (atoi(config.sensor_dht_on) == 1)
     {
         data1.tempStr = floatToString(data1.temp, VALUE_TEMP);
         data1.humidityStr = floatToString(data1.humidity, VALUE_HUMIDITY);
@@ -802,7 +802,7 @@ void sendSensorsData()
              
       url += config.thing_speak_api_key;
 
-      if (atoi(config.sensor_dht22_on) == 1) {
+      if (atoi(config.sensor_dht_on) == 1) {
       url += "&field1=";
       url += dht_temp;
       url += "&field2=";
@@ -866,14 +866,14 @@ void sendNarodmon()
       client.print("ESP8266"); // Назва пристрою
       client.println();
       
-      if (atoi(config.sensor_dht22_on) == 1) {
+      if (atoi(config.sensor_dht_on) == 1) {
         client.print("#T1#");
         client.print(dht_temp);
-        client.print("#DHT22 Temp#");
+        client.print("#dht Temp#");
         client.println();
         client.print("#H1#");
         client.print(dht_humidity);
-        client.print("#DHT22 Humidity#");
+        client.print("#dht Humidity#");
         client.println();
       }
       
@@ -911,13 +911,13 @@ void sendNarodmon()
         Serial.print(line);
       }
 }
-
-void stopWiFiAndSleep() {
-  WiFi.disconnect();
-  WiFi.mode(WIFI_OFF);
+//
+//void stopWiFiAndSleep() {
+//  WiFi.disconnect();
+//  WiFi.mode(WIFI_OFF);
 //  WiFi.forceSleepBegin();
-//  delay(1);
-}
+////  delay(1);
+//}
 
 void loop()
 {
@@ -952,21 +952,21 @@ void loop()
                         sendNarodmon();
                     }
                    }
-                   else {
-                    WiFi.mode(WIFI_AP_STA);
-                    WiFi.begin(config.sta_ssid, config.sta_pwd);
-                    while (WiFi.status() != WL_CONNECTED) 
-                    delay(300);
-
-                    if (atoi(config.ts_toogle) == 1) {
-                        sendSensorsData();
-                    }
-                    if (atoi(config.narodmon_toogle) == 1) {
-                        sendNarodmon();
-                    }
-                    }
-//                int ds_time = (atoi(config.get_data_delay) - 5)*1000000;
-                stopWiFiAndSleep();
+//                   else {
+//                    WiFi.mode(WIFI_AP_STA);
+//                    WiFi.begin(config.sta_ssid, config.sta_pwd);
+//                    while (WiFi.status() != WL_CONNECTED) 
+//                    delay(300);
+//
+//                    if (atoi(config.ts_toogle) == 1) {
+//                        sendSensorsData();
+//                    }
+//                    if (atoi(config.narodmon_toogle) == 1) {
+//                        sendNarodmon();
+//                    }
+//                    }
+////                int ds_time = (atoi(config.get_data_delay) - 5)*1000000;
+//                stopWiFiAndSleep();
             }
         }
     }
