@@ -301,7 +301,7 @@ void webSensors()
         "<h2>Давачі даних</h2>" +
         "<div class='container'>" +
         renderParameterRow("BMP180 On", "sensor_bmp180_on", config.sensor_bmp180_on) + 
-        renderParameterRow("dht On", "sensor_dht_on", config.sensor_dht_on) + 
+        renderParameterRow("DHT On", "sensor_dht_on", config.sensor_dht_on) + 
         renderParameterRow("DS18B20 On", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
         renderParameterRow("Analog (ADC) On", "sensor_analog_on", config.sensor_analog_on) + 
         "<hr/>" +
