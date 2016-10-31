@@ -9,6 +9,8 @@ bool JsonConfig::printConfig()
     Serial.print(F("sta_ssid      : "));   Serial.println(sta_ssid);
     Serial.print(F("sta_pwd       : "));   Serial.println(sta_pwd);
     Serial.print(F("hidden_toogle : "));   Serial.println(hidden_toogle);
+    Serial.print(F("deepsleep_toogle : "));   Serial.println(deepsleep_toogle);
+//    Serial.print(F("deepsleep_timer : "));   Serial.println(deepsleep_timer);
 
     Serial.print(F("static_ip_toogle: "));   Serial.println(static_ip_toogle);
     Serial.print(F("static_ip     : "));   Serial.println(static_ip);
@@ -78,6 +80,7 @@ bool JsonConfig::loadConfig()
     if (json.containsKey("sta_ssid")) { const char* sta_ssid_char = json["sta_ssid"]; sprintf_P(sta_ssid, ("%s"), sta_ssid_char); }
     if (json.containsKey("sta_pwd")) { const char* sta_pwd_char = json["sta_pwd"]; sprintf_P(sta_pwd, ("%s"), sta_pwd_char); }
     if (json.containsKey("hidden_toogle")) { const char* hidden_toogle_char = json["hidden_toogle"]; sprintf_P(hidden_toogle, ("%s"), hidden_toogle_char); }
+    if (json.containsKey("deepsleep_toogle")) { const char* deepsleep_toogle_char = json["deepsleep_toogle"]; sprintf_P(deepsleep_toogle, ("%s"), deepsleep_toogle_char); }
 
     if (json.containsKey("static_ip_toogle")) { const char* static_ip_toogle_char = json["static_ip_toogle"]; sprintf_P(static_ip_toogle, ("%s"), static_ip_toogle_char); }
     if (json.containsKey("static_ip")) { const char* static_ip_char = json["static_ip"]; sprintf_P(static_ip, ("%s"), static_ip_char); }
@@ -95,7 +98,7 @@ bool JsonConfig::loadConfig()
     if (json.containsKey("sensor_dht_on")) { const char* sensor_dht_on_char = json["sensor_dht_on"]; sprintf_P(sensor_dht_on, ("%s"), sensor_dht_on_char); }
     if (json.containsKey("sensor_ds18b20_on")) { const char* sensor_ds18b20_on_char = json["sensor_ds18b20_on"]; sprintf_P(sensor_ds18b20_on, ("%s"), sensor_ds18b20_on_char); }
     if (json.containsKey("sensor_analog_on")) { const char* sensor_analog_on_char = json["sensor_analog_on"]; sprintf_P(sensor_analog_on, ("%s"), sensor_analog_on_char); }
-
+//    if (json.containsKey("deepsleep_timer")) { const char* deepsleep_timer_char = json["deepsleep_timer"]; sprintf_P(deepsleep_timer, ("%s"), deepsleep_timer_char); }
 
     configFile.close();
 
@@ -123,6 +126,7 @@ bool JsonConfig::saveConfig()
     json["sta_ssid"] = sta_ssid;
     json["sta_pwd"] = sta_pwd;
     json["hidden_toogle"] = hidden_toogle;
+    json["deepsleep_toogle"] = deepsleep_toogle;
 
     json["static_ip_toogle"] = static_ip_toogle;
     json["static_ip"] = static_ip;
@@ -141,6 +145,8 @@ bool JsonConfig::saveConfig()
     json["sensor_ds18b20_on"] = sensor_ds18b20_on;
     json["sensor_analog_on"] = sensor_analog_on;
 
+//    json["deepsleep_timer"] = deepsleep_timer;
+    
     json.printTo(configFile);
     configFile.close();
 

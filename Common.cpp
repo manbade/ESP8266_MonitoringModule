@@ -122,24 +122,40 @@ String floatToString(float f, int valueType, int digits, int decimals)
     return String(c);
 }
 
-String getUptimeData()
+String getUptimeData(unsigned long dstimer)
 {
     int highMillis = 0;
     int rollover = 0;
-
-    //** Making Note of an expected rollover *****//
-    if (millis() >= 3000000000)
-    {
-        highMillis = 1;
-    }
-    //** Making note of actual rollover **//
-    if (millis() <= 100000 && highMillis == 1)
-    {
-        rollover++;
-        highMillis = 0;
-    }
-
-    long secsUp = millis() / 1000;
+//    long secsUp = 0;
+//    if(dstimer > 0) {
+//      
+      //** Making Note of an expected rollover *****//
+      if (millis() >= 3000000000)
+      {
+          highMillis = 1;
+      }
+      //** Making note of actual rollover **//
+      if (millis() <= 100000 && highMillis == 1)
+      {
+          rollover++;
+          highMillis = 0;
+      }
+      long secsUp = millis() / 1000;
+//    }
+//    else {
+//       //** Making Note of an expected rollover *****//
+//      if ((dstimer + millis()) >= 3000000000)
+//      {
+//          highMillis = 1;
+//      }
+//      //** Making note of actual rollover **//
+//      if ((dstimer + millis()) <= 100000 && highMillis == 1)
+//      {
+//          rollover++;
+//          highMillis = 0;
+//      }
+//      long secsUp = (dstimer + millis()) / 1000;
+//    }
     long second = secsUp % 60;
     long minute = (secsUp / 60) % 60;
     long hour = (secsUp / (60 * 60)) % 24;

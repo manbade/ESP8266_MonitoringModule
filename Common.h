@@ -16,7 +16,7 @@ String getDateTimeString(DateTime now);
 IPAddress stringToIp(String strIp);
 bool isIPValid(const char * IP);
 String floatToString(float f, int valueType, int digits = 4, int decimals = 1);
-String getUptimeData();
+String getUptimeData(unsigned long dstimer = 0);
 String getFreeMemory();
 String getIpString(IPAddress ip);
 String getMacString();

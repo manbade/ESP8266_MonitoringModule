@@ -43,6 +43,7 @@ public:
     char sta_ssid[32] = "ASUS3";
     char sta_pwd[32] = "Zeus1106";
     char hidden_toogle[32] = "0";
+    char deepsleep_toogle[32] = "0";
     
     char static_ip_toogle[32] = "0";
     char static_ip[32] = "192.168.1.55";
@@ -60,6 +61,8 @@ public:
     char narodmon_toogle[32] = "0";
     char ts_toogle[32] = "0";
     char thing_speak_api_key[32] = "6NSWJ0EQD330HG4F";
+
+//    char deepsleep_timer[32] = "0";
 
 private:
 };

@@ -11,6 +11,10 @@
 #include "WebCommon.h"
 #include "Common.h"
 
+extern "C" {
+#include <user_interface.h>
+}
+
 ESP8266WebServer WebServer(80);
 const int maxConnectAttempts = 20;
 
@@ -18,14 +22,14 @@ JsonConfig config;
 #define MAX_WIFI_COUNT 50
 WiFiData wiFiDatas[MAX_WIFI_COUNT];
 
-#define DHTPIN 2
+#define DHTPIN 5
 #define DHTTYPE DHT21
 DHT dht(DHTPIN, DHTTYPE);
 SensorData data1;
 
 // Data wire is plugged into port 2 on the Arduino
 #define ONE_WIRE_BUS 0
-// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+#define TEMPERATURE_PRECISION 12 // resolution
 OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire); 
@@ -56,7 +60,6 @@ void renderAPStatus(String status, int r, int g, int b);
 
 const char* host = "api.thingspeak.com";
 
-
 void handleTimerWhileRebooting()
 {
     int periods = atoi(config.reboot_delay);
@@ -81,17 +84,27 @@ void rebootESP()
 void webRoot()
 {
     Serial.println("\r\nServer: request ROOT");
-    String ssid_h_name;
+    
+    String ssid_h_name, uptime_str, ds_alert;
     if (WiFi.status() == WL_CONNECTED)
     { 
       ssid_h_name = "<p>Ви підключені до мережі <b id='ssid_name'>" + String(config.sta_ssid) + "</b></p>";
     }
-    else { ssid_h_name = "";}
-
+    else { ssid_h_name = ""; ds_alert = "";}
+    if(atoi(config.deepsleep_toogle)) {
+//      unsigned long uptime = atoi(config.deepsleep_timer);
+//      uptime_str = renderParameterRow("Час роботи", "", getUptimeData(uptime), true);
+      ds_alert = "<p>Активовано режим <b>DeepSleep</b></p>";
+    }
+    else {
+//      uptime_str = renderParameterRow("Час роботи", "", getUptimeData(), true);
+      ds_alert = "";
+    }
     String data = 
         renderTitle(config.module_name, "Головна") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         String(F("<h2>")) + config.module_name + String(F("</h2>")) +
         ssid_h_name +
+        ds_alert +
         String(F("<div class='container'>")) +
         renderParameterRow("ID системи", "", config.module_id, true) + 
         renderParameterRow("Назва системи", "", config.module_name, true) + 
@@ -154,6 +167,12 @@ void webSetup()
     if (payload.length() > 0)
     {
         payload.toCharArray(config.hidden_toogle, sizeof(config.hidden_toogle));
+        config_changed = true;
+    }
+    payload = WebServer.arg("deepsleep_toogle");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.deepsleep_toogle, sizeof(config.deepsleep_toogle));
         config_changed = true;
     }
     payload = WebServer.arg("narodmon_toogle");
@@ -226,6 +245,7 @@ void webSetup()
         renderParameterRow("Назва системи", "module_name", config.module_name) + 
         renderParameterRow("Пароль доступу до системи", "module_pwd", config.module_pwd, false, true) + 
         renderParameterRow("Прихований SSID", "hidden_toogle", config.hidden_toogle) +
+        renderParameterRow("Режим DeepSleep", "deepsleep_toogle", config.deepsleep_toogle) +
         "<hr/>" +
         "<div class='input-group'><label class='input_label' for='sta_ssid'>SSID</label><select id='sta_ssid' class='form-control'>" +
         ssid_list +
@@ -519,11 +539,13 @@ void initSensors()
     if (atoi(config.sensor_ds18b20_on) == 1)
     { 
       sensors.begin();
+      sensors.getAddress(insideThermometer,0);
+      sensors.setResolution(insideThermometer, TEMPERATURE_PRECISION);
     }
     
     if (atoi(config.sensor_bmp180_on) == 1)
     {
-//      Wire.begin(2, 0); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
+      Wire.begin(2, 14); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
       if (bmp180.begin())
       {
           bmp180initialized = true;
@@ -562,9 +584,40 @@ void setup()
 
     initWiFi();
     initSensors();
-    
 
     Serial.println("\r\nStarting complete.");
+    rst_info *rinfo;
+    rinfo = ESP.getResetInfoPtr();
+      
+    if ((*rinfo).reason == 5) {
+      Serial.println(String("ESP.getResetReason = ") + (*rinfo).reason + " > " + ESP.getResetReason());
+      
+      requestSensorValues();
+      renderSensorValues();
+      
+        if (WiFi.status() == WL_CONNECTED)
+        {
+          if (atoi(config.ts_toogle) == 1) {
+              sendSensorsData();
+          }
+          if (atoi(config.narodmon_toogle) == 1) {
+              sendNarodmon();
+          }
+         }
+      int ds_time = (atoi(config.get_data_delay)); 
+      ESP.deepSleep(ds_time * 1000000);
+    }
+    else {
+      Serial.println(String("ESP.getResetReason() = ") + (*rinfo).reason + " > " + ESP.getResetReason());
+//      if(atoi(config.deepsleep_toogle)) { 
+//        Serial.println("DeepSleep mode OFF");  
+//        char ds_toogle[32] = "0";
+//        String payload = ds_toogle;
+//        payload.toCharArray(config.deepsleep_toogle, sizeof(config.deepsleep_toogle));
+//        parseServerResponse(payload);
+//        config.saveConfig();
+//        }
+    }
 }
 
  SensorData getDS18B20Data()
@@ -924,19 +977,12 @@ void sendNarodmon()
         Serial.print(line);
       }
 }
-//
-//void stopWiFiAndSleep() {
-//  WiFi.disconnect();
-//  WiFi.mode(WIFI_OFF);
-//  WiFi.forceSleepBegin();
-////  delay(1);
-//}
 
 void loop()
 {
     WebServer.handleClient();
-
     unsigned long currentMillis = millis();
+  
     if (currentMillis - previousMillis >= ONE_SECOND)
     {
         currentSensorCycle++;
@@ -949,10 +995,9 @@ void loop()
         }
         else
         {
-//            renderDateTime();        
+//            renderDateTime();  
             if (currentSensorCycle % atoi(config.get_data_delay) == 0)
             {
-                Serial.println("\r\nGetting sensors data...");
                 requestSensorValues();
                 renderSensorValues();
                 
@@ -965,21 +1010,19 @@ void loop()
                         sendNarodmon();
                     }
                    }
-//                   else {
-//                    WiFi.mode(WIFI_AP_STA);
-//                    WiFi.begin(config.sta_ssid, config.sta_pwd);
-//                    while (WiFi.status() != WL_CONNECTED) 
-//                    delay(300);
-//
-//                    if (atoi(config.ts_toogle) == 1) {
-//                        sendSensorsData();
-//                    }
-//                    if (atoi(config.narodmon_toogle) == 1) {
-//                        sendNarodmon();
-//                    }
-//                    }
-////                int ds_time = (atoi(config.get_data_delay) - 5)*1000000;
-//                stopWiFiAndSleep();
+                if(atoi(config.deepsleep_toogle) == 1) {
+                
+//                char ds_timer[32];
+//                itoa(currentMillis, ds_timer, 10);
+//                
+//                String payload = ds_timer;
+//                payload.toCharArray(config.deepsleep_timer, sizeof(config.deepsleep_timer));
+//                parseServerResponse(payload);
+//                config.saveConfig();
+               
+                int ds_time = (atoi(config.get_data_delay)); 
+                ESP.deepSleep(ds_time * 1000000);
+                }
             }
         }
     }
