@@ -1,7 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <WiFiClient.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPClient.h>
+#include <ESP8266HTTPUpdateServer.h>
 #include <DHT.h>
 #include <SFE_BMP180.h>
 #include <Wire.h>
@@ -16,13 +18,15 @@ extern "C" {
 }
 
 ESP8266WebServer WebServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
 const int maxConnectAttempts = 20;
 
 JsonConfig config;
 #define MAX_WIFI_COUNT 50
 WiFiData wiFiDatas[MAX_WIFI_COUNT];
 
-#define DHTPIN 5
+#define DHTPIN 4
 #define DHTTYPE DHT21
 DHT dht(DHTPIN, DHTTYPE);
 SensorData data1;
@@ -320,10 +324,10 @@ void webSensors()
         renderTitle(config.module_name, "Давачі даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
         "<h2>Давачі даних</h2>" +
         "<div class='container'>" +
-        renderParameterRow("BMP180 On", "sensor_bmp180_on", config.sensor_bmp180_on) + 
-        renderParameterRow("DHT On", "sensor_dht_on", config.sensor_dht_on) + 
-        renderParameterRow("DS18B20 On", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
-        renderParameterRow("Analog (ADC) On", "sensor_analog_on", config.sensor_analog_on) + 
+        renderParameterRow("BMP180 (D4 та D5)", "sensor_bmp180_on", config.sensor_bmp180_on) + 
+        renderParameterRow("DHT (D2)", "sensor_dht_on", config.sensor_dht_on) + 
+        renderParameterRow("DS18B20 (D3)", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
+        renderParameterRow("Analog (ADC)", "sensor_analog_on", config.sensor_analog_on) + 
         "<hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/sensors\");'>Зберегти</a>" +
         "</div>" +
@@ -388,7 +392,7 @@ void initWebServer()
     WebServer.on("/sensors", webSensors);
     WebServer.on("/styles.css", webStyles);
     WebServer.onNotFound(handleNotFound);
-    WebServer.begin();
+    
     Serial.println("Server: started");
 }
 
@@ -526,6 +530,8 @@ void initWiFi()
             yield();
         }
     }
+    httpUpdater.setup(&WebServer);
+    WebServer.begin();
     MDNS.addService("http", "tcp", 80);
 }
 
@@ -581,6 +587,15 @@ void setup()
 
         config.printConfig();
     }
+
+    String mac = getMacString(),
+           mactoname = "MonSystem_" + String(mac[0]) + String(mac[1]);
+    char module_name[32];
+    strcpy(module_name, mactoname.c_str());
+    String payload = module_name;
+    payload.toCharArray(config.module_name, sizeof(config.module_name));
+    parseServerResponse(payload);
+    config.saveConfig();
 
     initWiFi();
     initSensors();

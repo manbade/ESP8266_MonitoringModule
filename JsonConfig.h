@@ -31,7 +31,7 @@ public:
 };
 
 class JsonConfig
-{
+{  
 public:
     bool saveConfig();
     bool loadConfig();
