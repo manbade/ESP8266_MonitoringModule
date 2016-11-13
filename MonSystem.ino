@@ -551,7 +551,7 @@ void initSensors()
     
     if (atoi(config.sensor_bmp180_on) == 1)
     {
-      Wire.begin(2, 14); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
+      Wire.begin(2, 14);
       if (bmp180.begin())
       {
           bmp180initialized = true;
@@ -733,7 +733,7 @@ SensorData getBmp180Data()
     if (bmp180initialized)
     {
         data.temp = T;
-        data.pressure = p0;
+        data.pressure = p0 * 0.0295333727 * 25.4;
         data.humidity = 0;
     }    
     return data;
@@ -813,7 +813,7 @@ void renderSensorValues()
     if (atoi(config.sensor_bmp180_on) == 1)
     {
         data3.tempStr = floatToString(data3.temp, VALUE_TEMP);
-        data3.pressureStr = floatToString(data3.pressure * 0.0295333727 * 25.4, VALUE_PRESSURE, 3, 2);
+        data3.pressureStr = floatToString(data3.pressure, VALUE_PRESSURE, 3, 2);
         renderRowValue(data3.pressureStr, 5);
         renderRowValue(data3.tempStr, 6);
         Serial.println(String("bmp180 temp : " + data3.tempStr));
@@ -837,7 +837,7 @@ void parseServerResponse(String payload)
 
 float getTempForJson(float value)
 {
-    return (isnan(value)) || value == -127 || value == 85 ? 0 : value;
+    return isnan(value) ? 0 : value;
 }
 
 float getPressureForJson(float value)
@@ -877,7 +877,7 @@ void sendSensorsData()
              dht_humidity = String(getHumidityForJson(data1.humidity)),
              ds18b20_temp = String(getTempForJson(data2.temp)),
              bmp180_temp = String(getTempForJson(data3.temp)),
-             bmp180_pressure = String(data3.pressure * 0.0295333727 * 25.4),
+             bmp180_pressure = String(data3.pressure),
              adc_val = String(getADCForJson(data4.adc)),
              url = "/update?key=";
              
@@ -938,7 +938,7 @@ void sendNarodmon()
              dht_humidity = String(getHumidityForJson(data1.humidity)),
              ds18b20_temp = String(getTempForJson(data2.temp)),
              bmp180_temp = String(getTempForJson(data3.temp)),
-             bmp180_pressure = String(data3.pressure * 0.0295333727 * 25.4),
+             bmp180_pressure = String(data3.pressure),
              adc_val = String(getADCForJson(data4.adc));
              
       client.print("#");
