@@ -110,7 +110,6 @@ void webRoot()
         ssid_h_name +
         ds_alert +
         String(F("<div class='container'>")) +
-        renderParameterRow("ID системи", "", config.module_id, true) + 
         renderParameterRow("Назва системи", "", config.module_name, true) + 
         renderParameterRow("IP системи", "", getIpString(WiFi.localIP()), true) + 
         renderParameterRow("MAC системи", "", getMacString(), true) + 
@@ -120,8 +119,8 @@ void webRoot()
         renderParameterRow("Темп. DHT, C", "", data1.tempStr, true) + 
         renderParameterRow("Вологість DHT, %", "", data1.humidityStr, true) + 
         renderParameterRow("Темп. DS18B20, C", "", data2.tempStr, true) + 
-        renderParameterRow("Темп. BMP180, C", "", data3.tempStr, true) + 
-        renderParameterRow("Атм.тиск BMP180, мм.рт.ст", "", data3.pressureStr, true) + 
+        renderParameterRow("Темп. BMP, C", "", data3.tempStr, true) + 
+        renderParameterRow("Атм.тиск BMP, мм.рт.ст", "", data3.pressureStr, true) + 
         renderParameterRow("ADC", "", data4.adcStr, true) + 
         "<hr/>" +
         renderParameterRow("Вільно пам'яті, байт", "", getFreeMemory(), true) + 
@@ -132,18 +131,74 @@ void webRoot()
     Serial.println("Server: request ROOT sent");
 }
 
-void webSetup()
+void cloudSetup()
 {
     Serial.println("\r\nServer: request SETUP");
 
     bool config_changed = false;
-    String payload = WebServer.arg("module_id");
+    String payload = WebServer.arg("narodmon_toogle");
     if (payload.length() > 0)
     {
-        payload.toCharArray(config.module_id, sizeof(config.module_id));
+        payload.toCharArray(config.narodmon_toogle, sizeof(config.narodmon_toogle));
         config_changed = true;
     }
-    payload = WebServer.arg("module_name");
+    payload = WebServer.arg("ts_toogle");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.ts_toogle, sizeof(config.ts_toogle));
+        config_changed = true;
+    }
+    payload = WebServer.arg("thing_speak_api_key");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.thing_speak_api_key, sizeof(config.thing_speak_api_key));
+        config_changed = true;
+    }
+    payload = WebServer.arg("get_data_delay");
+    if (payload.length() > 0)
+    {
+        payload.toCharArray(config.get_data_delay, sizeof(config.get_data_delay));
+        config_changed = true;
+    }
+    String ssid_h_name;
+    if (WiFi.status() == WL_CONNECTED)
+    { 
+      ssid_h_name = "<p>Ви підключені до мережі <b id='ssid_name'>" + String(config.sta_ssid) + "</b></p>";
+    }
+    else { ssid_h_name = "";}
+    String data = 
+        renderTitle(config.module_name, "Eкспорт даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
+        "<h2>Eкспорт даних в хмарні сховища</h2>" +
+        ssid_h_name +
+        "<div class='container'>" +
+        renderParameterRow("NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
+        renderParameterRow("ThingSpeak.com", "ts_toogle", config.ts_toogle) +
+        renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
+        "<div class='input-group'><label class='input_label' for='get_data_delay'>Інтервал експорту даних</label><select id='get_data_delay' class='form-control'>" +
+        delay_list() +
+        "<select></div>" +
+        "<hr/>" +
+        "<span id='data_delay' style='display:none;'>" + String(config.get_data_delay) + "</span>" +
+        "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/cloudSetup\");'>Зберегти</a>" +
+        "</div>" +
+        FPSTR(bodyEnd);
+
+    WebServer.send(200, "text/html", data);
+
+    if (config_changed)
+    {
+        config.saveConfig();
+    }
+
+    Serial.println("Server: request SETUP sent");
+}
+
+void wifiSetup()
+{
+    Serial.println("\r\nServer: request SETUP");
+
+    bool config_changed = false;
+    String payload = WebServer.arg("module_name");
     if (payload.length() > 0)
     {
         payload.toCharArray(config.module_name, sizeof(config.module_name));
@@ -179,24 +234,6 @@ void webSetup()
         payload.toCharArray(config.deepsleep_toogle, sizeof(config.deepsleep_toogle));
         config_changed = true;
     }
-    payload = WebServer.arg("narodmon_toogle");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.narodmon_toogle, sizeof(config.narodmon_toogle));
-        config_changed = true;
-    }
-    payload = WebServer.arg("ts_toogle");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.ts_toogle, sizeof(config.ts_toogle));
-        config_changed = true;
-    }
-    payload = WebServer.arg("thing_speak_api_key");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.thing_speak_api_key, sizeof(config.thing_speak_api_key));
-        config_changed = true;
-    }
     payload = WebServer.arg("static_ip_toogle");
     if (payload.length() > 0)
     {
@@ -221,19 +258,14 @@ void webSetup()
         payload.toCharArray(config.static_subnet, sizeof(config.static_subnet));
         config_changed = true;
     }
-    payload = WebServer.arg("get_data_delay");
-    if (payload.length() > 0)
-    {
-        payload.toCharArray(config.get_data_delay, sizeof(config.get_data_delay));
-        config_changed = true;
-    }
     String ssid_list, ssid_h_name;
     int numSsid = WiFi.scanNetworks();
           // print the name for each network found:
           for (int thisNet = 0; thisNet < numSsid; thisNet++) {
             String ssid_str = WiFi.SSID(thisNet) + " Signal: " + WiFi.RSSI(thisNet) + " dBm",
-                   ssid_name =  WiFi.SSID(thisNet);
-            ssid_list += renderParameterList(ssid_name, ssid_str); 
+                   ssid_name =  WiFi.SSID(thisNet),
+                   rssi = String(WiFi.RSSI(thisNet));
+            ssid_list += renderParameterList(ssid_name, ssid_str, rssi); 
           }
     if (WiFi.status() == WL_CONNECTED)
     { 
@@ -241,11 +273,10 @@ void webSetup()
     }
     else { ssid_h_name = "";}
     String data = 
-        renderTitle(config.module_name, "Налаштування") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
-        "<h2>Налаштування системи</h2>" +
+        renderTitle(config.module_name, "Налаштування WiFi") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
+        "<h2>Налаштування WiFi</h2>" +
         ssid_h_name +
         "<div class='container'>" +
-        renderParameterRow("ID системи", "module_id", config.module_id) + 
         renderParameterRow("Назва системи", "module_name", config.module_name) + 
         renderParameterRow("Пароль доступу до системи", "module_pwd", config.module_pwd, false, true) + 
         renderParameterRow("Прихований SSID", "hidden_toogle", config.hidden_toogle) +
@@ -261,16 +292,7 @@ void webSetup()
         renderParameterRow("Основний шлюз", "static_gateway", config.static_gateway) + 
         renderParameterRow("Маска мережі", "static_subnet", config.static_subnet) + 
         "<hr/>" +
-        renderParameterRow("Eкспорт даних на NarodMon.ru", "narodmon_toogle", config.narodmon_toogle) +
-        renderParameterRow("Eкспорт даних на ThingSpeak.com", "ts_toogle", config.ts_toogle) +
-        renderParameterRow("API ключ ThingSpeak", "thing_speak_api_key", config.thing_speak_api_key) +
-        "<div class='input-group'><label class='input_label' for='get_data_delay'>Інтервал експорту даних</label><select id='get_data_delay' class='form-control'>" +
-        delay_list() +
-        "<select></div>" +
-//        renderParameterRow("Інтервал експорту даних", "get_data_delay", config.get_data_delay) +  
-        "<p>НароднийМоніторинг вимагає мін.інтервалу експорту в 5 хвилин (300 секунд)</p><hr/>" +
-        "<span id='data_delay' style='display:none;'>" + String(config.get_data_delay) + "</span>" +
-        "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/setup\");'>Зберегти</a>" +
+        "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/wifiSetup\");'>Зберегти</a>" +
         "</div>" +
         FPSTR(bodyEnd);
 
@@ -283,6 +305,7 @@ void webSetup()
 
     Serial.println("Server: request SETUP sent");
 }
+
 
 void webSensors()
 {
@@ -313,21 +336,15 @@ void webSensors()
        payload.toCharArray(config.sensor_analog_on, sizeof(config.sensor_analog_on));
        config_changed = true;
    }
-//    payload = WebServer.arg("reboot_delay");
-//    if (payload.length() > 0)
-//    {
-//        payload.toCharArray(, sizeof());
-//        config_changed = true;
-//    }
 
     String data = 
         renderTitle(config.module_name, "Давачі даних") + FPSTR(stylesInclude) + FPSTR(scripts) + FPSTR(headEnd) + FPSTR(bodyStart) + renderMenu() +
-        "<h2>Давачі даних</h2>" +
+        "<h2 style='display: block;'>Давачі даних</h2>" +
         "<div class='container'>" +
-        renderParameterRow("BMP180 (D4 та D5)", "sensor_bmp180_on", config.sensor_bmp180_on) + 
-        renderParameterRow("DHT (D2)", "sensor_dht_on", config.sensor_dht_on) + 
-        renderParameterRow("DS18B20 (D3)", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
-        renderParameterRow("Analog (ADC)", "sensor_analog_on", config.sensor_analog_on) + 
+        renderParameterRow("BMP Val", "sensor_bmp180_on", config.sensor_bmp180_on) + 
+        renderParameterRow("DHT Val", "sensor_dht_on", config.sensor_dht_on) + 
+        renderParameterRow("DS18B20 Val", "sensor_ds18b20_on", config.sensor_ds18b20_on) + 
+        renderParameterRow("ADC Pin Val", "sensor_analog_on", config.sensor_analog_on) + 
         "<hr/>" +
         "<a class='btn btn-default marginTop0' role='button' onclick='saveFormData(\"/sensors\");'>Зберегти</a>" +
         "</div>" +
@@ -385,12 +402,13 @@ void handleNotFound()
 void initWebServer()
 {
     Serial.println("Server: starting");
+    WebServer.on("/styles.css", webStyles);
     WebServer.on("/", webRoot);
-    WebServer.on("/setup", webSetup);
+    WebServer.on("/cloudSetup", cloudSetup);
+    WebServer.on("/wifiSetup", wifiSetup);
     // WebServer.on("/time", webTime);
     WebServer.on("/reboot", webReboot);
     WebServer.on("/sensors", webSensors);
-    WebServer.on("/styles.css", webStyles);
     WebServer.onNotFound(handleNotFound);
     
     Serial.println("Server: started");
@@ -551,7 +569,7 @@ void initSensors()
     
     if (atoi(config.sensor_bmp180_on) == 1)
     {
-      Wire.begin(2, 14); //В разі використання версії ESP8266 ESP-01, на версіях ESP-07, ESP-12 за це відповідають 2 і 14 пін.
+      Wire.begin(2, 14);
       if (bmp180.begin())
       {
           bmp180initialized = true;
@@ -624,14 +642,14 @@ void setup()
     }
     else {
       Serial.println(String("ESP.getResetReason() = ") + (*rinfo).reason + " > " + ESP.getResetReason());
-//      if(atoi(config.deepsleep_toogle)) { 
-//        Serial.println("DeepSleep mode OFF");  
-//        char ds_toogle[32] = "0";
-//        String payload = ds_toogle;
-//        payload.toCharArray(config.deepsleep_toogle, sizeof(config.deepsleep_toogle));
-//        parseServerResponse(payload);
-//        config.saveConfig();
-//        }
+      if(atoi(config.deepsleep_toogle)) { 
+        Serial.println("DeepSleep mode OFF");  
+        char ds_toogle[32] = "0";
+        String payload = ds_toogle;
+        payload.toCharArray(config.deepsleep_toogle, sizeof(config.deepsleep_toogle));
+        parseServerResponse(payload);
+        config.saveConfig();
+        }
     }
 }
 
@@ -733,7 +751,7 @@ SensorData getBmp180Data()
     if (bmp180initialized)
     {
         data.temp = T;
-        data.pressure = p0;
+        data.pressure = p0 * 0.0295333727 * 25.4;
         data.humidity = 0;
     }    
     return data;
@@ -813,7 +831,7 @@ void renderSensorValues()
     if (atoi(config.sensor_bmp180_on) == 1)
     {
         data3.tempStr = floatToString(data3.temp, VALUE_TEMP);
-        data3.pressureStr = floatToString(data3.pressure * 0.0295333727 * 25.4, VALUE_PRESSURE, 3, 2);
+        data3.pressureStr = floatToString(data3.pressure, VALUE_PRESSURE, 3, 2);
         renderRowValue(data3.pressureStr, 5);
         renderRowValue(data3.tempStr, 6);
         Serial.println(String("bmp180 temp : " + data3.tempStr));
@@ -837,7 +855,7 @@ void parseServerResponse(String payload)
 
 float getTempForJson(float value)
 {
-    return (isnan(value)) || value == -127 || value == 85 ? 0 : value;
+    return isnan(value) ? 0 : value;
 }
 
 float getPressureForJson(float value)
@@ -877,7 +895,7 @@ void sendSensorsData()
              dht_humidity = String(getHumidityForJson(data1.humidity)),
              ds18b20_temp = String(getTempForJson(data2.temp)),
              bmp180_temp = String(getTempForJson(data3.temp)),
-             bmp180_pressure = String(data3.pressure * 0.0295333727 * 25.4),
+             bmp180_pressure = String(data3.pressure),
              adc_val = String(getADCForJson(data4.adc)),
              url = "/update?key=";
              
@@ -938,7 +956,7 @@ void sendNarodmon()
              dht_humidity = String(getHumidityForJson(data1.humidity)),
              ds18b20_temp = String(getTempForJson(data2.temp)),
              bmp180_temp = String(getTempForJson(data3.temp)),
-             bmp180_pressure = String(data3.pressure * 0.0295333727 * 25.4),
+             bmp180_pressure = String(data3.pressure),
              adc_val = String(getADCForJson(data4.adc));
              
       client.print("#");

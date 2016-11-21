@@ -37,7 +37,6 @@ public:
     bool loadConfig();
     bool printConfig();
 
-    char module_id[32] = "1";
     char module_name[32] = "MonitoringSystem";
     char module_pwd[32] = "somepass123";
     char sta_ssid[32] = "ASUS3";

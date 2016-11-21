@@ -7,9 +7,9 @@ String renderParameterRow(String paramName, String paramId, String paramValue, b
     return String("<div class='input-group'><label class='input_label' for='" + paramId + "'>" + paramName + "</label><input type='" + (isPassword ? "password" : "text") + "' id='" + paramId + "' class='form-control' " + (isReadonly ? readonlyAttr : "") + " value='" + paramValue + "' /></div>");
 }
 
-String renderParameterList(String paramValue, String paramDesc)
+String renderParameterList(String paramValue, String paramDesc, String optioanAttr)
 {
-    return String("<option value='" + paramValue + "'>" + paramDesc + "</option>");
+    return String("<option value='" + paramValue + "' data-dbm='" + optioanAttr  + "'>" + paramDesc + "</option>");
 }
 
 String delay_list() {

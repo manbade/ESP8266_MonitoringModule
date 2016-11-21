@@ -4,7 +4,6 @@ bool JsonConfig::printConfig()
 {
     Serial.println("\r\nConfig: printing");
 
-    Serial.print(F("module_id     : "));   Serial.println(module_id);
     Serial.print(F("module_name   : "));   Serial.println(module_name);
     Serial.print(F("sta_ssid      : "));   Serial.println(sta_ssid);
     Serial.print(F("sta_pwd       : "));   Serial.println(sta_pwd);
@@ -74,7 +73,6 @@ bool JsonConfig::loadConfig()
         return false;
     }
 
-    if (json.containsKey("module_id")) { const char* module_id_char = json["module_id"]; sprintf_P(module_id, ("%s"), module_id_char); }
     if (json.containsKey("module_name")) { const char* module_name_char = json["module_name"]; sprintf_P(module_name, ("%s"), module_name_char); }
     if (json.containsKey("module_pwd")) { const char* module_pwd_char = json["module_pwd"]; sprintf_P(module_pwd, ("%s"), module_pwd_char); }
     if (json.containsKey("sta_ssid")) { const char* sta_ssid_char = json["sta_ssid"]; sprintf_P(sta_ssid, ("%s"), sta_ssid_char); }
@@ -120,7 +118,6 @@ bool JsonConfig::saveConfig()
         return false;
     }
 
-    json["module_id"] = module_id;
     json["module_name"] = module_name;
     json["module_pwd"] = module_pwd;
     json["sta_ssid"] = sta_ssid;
